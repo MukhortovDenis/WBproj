@@ -6,8 +6,9 @@ import (
 )
 
 func main() {
+	handlers := new(pkg.Handler)
 	srv := new(pkg.Server)
-	if err := srv.Run("8080"); err != nil {
+	if err := srv.Run("8080", handlers.InitRoutes()); err != nil {
 		log.Fatal(err.Error())
 	}
 }
