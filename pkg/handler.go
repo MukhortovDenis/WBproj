@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"WBproj/cmd/service"
+	"WBproj/pkg/logging"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
@@ -9,10 +10,14 @@ import (
 
 type Handler struct {
 	services *service.Service
+	logger logging.Logger
 }
 
-func NewHandler(services *service.Service) *Handler{
-	return &Handler{services: services}
+func NewHandler(services *service.Service, logger logging.Logger) *Handler {
+	return &Handler{
+		services: services,
+		logger: logger,
+	}
 }
 
 func (h *Handler) InitRoutes() *chi.Mux {
@@ -22,6 +27,6 @@ func (h *Handler) InitRoutes() *chi.Mux {
 	router.Use(middleware.Recoverer)
 	router.Get("/", h.signIn)
 	router.Get("/sign-in", h.signIn)
-	router.Post("/sign-up", h.signUp)
+	router.Get("/sign-up", h.signUp)
 	return router
 }

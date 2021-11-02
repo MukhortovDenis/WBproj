@@ -3,11 +3,15 @@ package main
 import (
 	"WBproj/cmd/service"
 	"WBproj/pkg"
+	"WBproj/pkg/logging"
 	"WBproj/repository"
-	"log"
+
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
 func main() {
+	logger := logging.GetLogger()
+	logger.Info("createDB")
 	db, err := repository.NewPostgresDB(repository.Config{
 		Host:     "ec2-34-249-247-7.eu-west-1.compute.amazonaws.com",
 		Port:     "5432",
@@ -16,14 +20,23 @@ func main() {
 		DBName:   "d900njt9tj61n8",
 		SSLMode:  "require",
 	})
-	if err != nil{
-		log.Print(err.Error())
+	if err != nil {
+		logger.Fatal(err)
 	}
+
 	repos := repository.NewRepository(db)
 	servises := service.NewService(repos)
-	handlers := pkg.NewHandler(servises)
+	handlers := pkg.NewHandler(servises, logger)
 	srv := new(pkg.Server)
-	if err := srv.Run("8080", handlers.InitRoutes()); err != nil {
-		log.Fatal(err.Error())
+	cfg := pkg.Config{}
+	err = cleanenv.ReadConfig("config.yml", &cfg)
+	if err != nil {
+		logger.Fatal(err)
 	}
+	path := cfg.Host + ":" + cfg.Port
+	err = srv.Run(path, handlers.InitRoutes())
+	if err != nil {
+		logger.Fatal(err)
+	}
+	logger.Info("сервер отключен")
 }

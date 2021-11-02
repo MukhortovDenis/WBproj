@@ -5,13 +5,18 @@ import (
 	"net/http"
 )
 
+type Config struct {
+	Port string `yaml:"port" env:"PORT"`
+	Host string `yaml:"host" env:"HOST" env-default:"0.0.0.0"`
+}
 type Server struct {
 	httpServer *http.Server
 }
 
-func (s *Server) Run(port string, handler http.Handler) error {
+func (s *Server) Run(path string, handler http.Handler) error {
 	s.httpServer = &http.Server{
-		Addr: ":" + port,
+		Addr:    path,
+		Handler: handler,
 	}
 	return s.httpServer.ListenAndServe()
 }
