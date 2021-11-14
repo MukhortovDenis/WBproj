@@ -1,18 +1,25 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/stan.go"
 )
 
-
-func printMsg(m *stan.Msg, i int) {
-	log.Printf("[#%d] Received: %s\n", i, m)
+func msg(m *stan.Msg) *Order {
+	GetData := Order{}
+	data := bytes.NewReader(m.Data)
+	err := json.NewDecoder(data).Decode(&GetData)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return &GetData
 }
 func main() {
-	var i int = 0
 	ClusterURLs = [2]string{
 		"wbx-world-nats-stage.dp.wb.ru",
 		"wbx-world-nats-stage.dl.wb.ru",
@@ -36,8 +43,8 @@ func main() {
 	log.Printf("Connected to %s clusterID: [%s] clientID: [%s]\n", ClusterURLs[0], ClusterID, Subject)
 
 	sub, err := sc.Subscribe(Subject, func(m *stan.Msg) {
-		printMsg(m, i)
-		i++
+		data := msg(m)
+		log.Print(data)
 	}, stan.DeliverAllAvailable())
 	if err != nil {
 		sc.Close()
