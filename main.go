@@ -43,7 +43,6 @@ func natsStreaming(ClusterUrls [2]string, i int, ClusterID string, Subject strin
 		if data == nil {
 			sub, err := sc.Subscribe(Subject, func(m *stan.Msg) {
 				data = msg(m)
-				ch <- *data
 			}, stan.DeliverAllAvailable())
 			if err != nil {
 				sc.Close()
