@@ -27,7 +27,7 @@ func main() {
 	ClusterID = "world-nats-stage"
 	Subject = "go.test"
 	opts := []nats.Option{nats.Name("NATS Streaming Example Subscriber")}
-	nc, err := nats.Connect(ClusterURLs[0], opts...)
+	nc, err := nats.Connect(ClusterURLs[1], opts...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,9 +38,9 @@ func main() {
 			log.Fatalf("Connection lost, reason: %v", reason)
 		}))
 	if err != nil {
-		log.Fatalf("Can't connect: %v.\nMake sure a NATS Streaming Server is running at: %s", err, ClusterURLs[0])
+		log.Fatalf("Can't connect: %v.\nMake sure a NATS Streaming Server is running at: %s", err, ClusterURLs[1])
 	}
-	log.Printf("Connected to %s clusterID: [%s] clientID: [%s]\n", ClusterURLs[0], ClusterID, Subject)
+	log.Printf("Connected to %s clusterID: [%s] clientID: [%s]\n", ClusterURLs[1], ClusterID, Subject)
 
 	sub, err := sc.Subscribe(Subject, func(m *stan.Msg) {
 		data := msg(m)
