@@ -43,6 +43,7 @@ func natsStreaming(ClusterUrls [2]string, i int, ClusterID string, Subject strin
 		if data == nil {
 			sub, err := sc.Subscribe(Subject, func(m *stan.Msg) {
 				data = msg(m)
+
 			}, stan.DeliverAllAvailable())
 			if err != nil {
 				sc.Close()
@@ -58,6 +59,13 @@ func natsStreaming(ClusterUrls [2]string, i int, ClusterID string, Subject strin
 	}
 
 }
+func (o Order) finalPrice() int {
+	finalPrice := o.Payment.DeliveryCost
+	for i := range o.Items {
+		finalPrice += o.Items[i].TotalPrice
+	}
+	return finalPrice
+}
 
 func main() {
 	ClusterURLs = [2]string{
@@ -69,10 +77,11 @@ func main() {
 	ch := make(chan Order, 1)
 	go natsStreaming(ClusterURLs, 0, ClusterID, Subject, ch)
 	data := <-ch
+	finalPrice := data.finalPrice()
 	newData := OrderAnother{
 		OrderUID:        data.OrderUID,
 		Entry:           data.Entry,
-		TotalPrice:      0,    //data.Items.TotalPrice,
+		TotalPrice:      finalPrice,
 		CustomerID:      data.CustomerID,
 		TrackNumber:     data.TrackNumber,
 		DeliveryService: data.DeliveryService,
