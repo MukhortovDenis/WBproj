@@ -3,6 +3,7 @@ module WBproj
 go 1.17
 
 require (
+	github.com/lib/pq v1.10.4
 	github.com/nats-io/nats.go v1.13.1-0.20211018182449-f2416a8b1483
 	github.com/nats-io/stan.go v0.10.1
 )

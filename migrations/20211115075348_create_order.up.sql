@@ -1,6 +1,6 @@
 CREATE TABLE orders (
     id serial not null primary key,
-    orderUID varchar not null,
+    orderUID varchar not null unique,
     entr varchar not null,
     totalprice int not null,
     customerid varchar not null,

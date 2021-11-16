@@ -2,19 +2,24 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/stan.go"
+
+	_ "github.com/lib/pq"
 )
 
-// var dbConn string = "postgres://jamurnzdljgiuh:1cf519495074f18d6bbaad3c51bb7e45377eb80e56e3c916d41c1520c49a77a6@ec2-54-228-139-34.eu-west-1.compute.amazonaws.com:5432/d1o63kvnve10ul"
+var dbConn string = "postgres://jamurnzdljgiuh:1cf519495074f18d6bbaad3c51bb7e45377eb80e56e3c916d41c1520c49a77a6@ec2-54-228-139-34.eu-west-1.compute.amazonaws.com:5432/d1o63kvnve10ul?sslmode=require"
 
 func msg(m *stan.Msg) *Order {
 	GetData := Order{}
 	data := bytes.NewReader(m.Data)
+
 	err := json.NewDecoder(data).Decode(&GetData)
 	if err != nil {
 		fmt.Println(err)
@@ -86,5 +91,15 @@ func main() {
 		TrackNumber:     data.TrackNumber,
 		DeliveryService: data.DeliveryService,
 	}
-	log.Print(newData)
+	db, err := sql.Open("postgres", dbConn)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	var userid int
+	err = db.QueryRow(`INSERT INTO orders (orderUID, entr, totalprice, customerid, tracknumber, deliveryservice) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, newData.OrderUID, newData.Entry, newData.TotalPrice, newData.CustomerID, newData.TrackNumber, newData.DeliveryService).Scan(&userid)
+	if err != nil {
+		log.Println(err)
+	}
+	defer db.Close()
 }
