@@ -26,6 +26,19 @@ type CacheInterface interface {
 
 var Cache CacheInterface
 
+func InitDB(DBConn string) *sql.DB {
+	db, err := sql.Open("postgres", DBConn)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return db
+}
+
 func InitCache() {
 	Cache = &AppCache{
 		client: cache.New(5*time.Minute, 10*time.Minute),
@@ -39,7 +52,7 @@ func (r *AppCache) Set(key string, data interface{}, expiration time.Duration) {
 func (r *AppCache) Get(key string) ([]byte, error) {
 	res, exist := r.client.Get(key)
 	if !exist {
-		return nil, nil
+		return nil, errors.New("нет такого ключа")
 	}
 
 	resByte, ok := res.([]byte)
@@ -53,7 +66,6 @@ func (r *AppCache) Get(key string) ([]byte, error) {
 func msg(m *stan.Msg) *Order {
 	GetData := Order{}
 	data := bytes.NewReader(m.Data)
-
 	err := json.NewDecoder(data).Decode(&GetData)
 	if err != nil {
 		fmt.Println(err)
@@ -114,6 +126,7 @@ func main() {
 	ClusterID = "world-nats-stage"
 	Subject = "go.test"
 	InitCache()
+	db := InitDB(dbConn)
 	ch := make(chan Order, 1)
 	go natsStreaming(ClusterURLs, 0, ClusterID, Subject, ch)
 	data := <-ch
@@ -126,20 +139,38 @@ func main() {
 		TrackNumber:     data.TrackNumber,
 		DeliveryService: data.DeliveryService,
 	}
-	Cache.Set(newData.OrderUID, newData, 5*time.Minute)
-	db, err := sql.Open("postgres", dbConn)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
-	}
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Cache.Set(newData.OrderUID, newData, cache.DefaultExpiration)
+
 	var userid int
-	err = db.QueryRow(`INSERT INTO orders (orderUID, entr, totalprice, customerid, tracknumber, deliveryservice) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, newData.OrderUID, newData.Entry, newData.TotalPrice, newData.CustomerID, newData.TrackNumber, newData.DeliveryService).Scan(&userid)
+	err := db.QueryRow(`INSERT INTO orders (orderUID, entr, totalprice, customerid, tracknumber, deliveryservice) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, newData.OrderUID, newData.Entry, newData.TotalPrice, newData.CustomerID, newData.TrackNumber, newData.DeliveryService).Scan(&userid)
 	if err != nil {
 		log.Println(err)
 	}
+	rows, err := db.Query(`SELECT orderUID, entr, totalprice, customerid, tracknumber, deliveryservice FROM orders`)
+	if err != nil {
+		log.Print(err)
+	}
+	for rows.Next() {
+		data := OrderAnother{}
+		err = rows.Scan(&data.OrderUID, &data.Entry, &data.TotalPrice, &data.CustomerID, &data.TrackNumber, &data.DeliveryService)
+		if err != nil {
+			log.Fatal(err)
+		}
+		result, err := json.Marshal(data)
+		if err != nil {
+			log.Fatal(err)
+		}
+		Cache.Set(data.OrderUID, result, cache.NoExpiration)
+	}
+	val, err := Cache.Get(data.OrderUID)
+	if err != nil {
+		log.Println(err)
+	}
+	ord := OrderAnother{}
+	err = json.Unmarshal(val, &ord)
+	if err != nil{
+		log.Print(err)
+	}
+	log.Print(ord)
 	defer db.Close()
 }
