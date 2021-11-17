@@ -1,5 +1,7 @@
 package main
 
+import "github.com/patrickmn/go-cache"
+
 type Order struct {
 	OrderUID          string  `json:"order_uid"`
 	Entry             string  `json:"entry"`
@@ -42,4 +44,7 @@ type OrderAnother struct {
 	CustomerID      string `json:"customer_id"`
 	TrackNumber     string `json:"track_number"`
 	DeliveryService string `json:"delivery_service"`
+}
+type AppCache struct {
+	client *cache.Cache
 }
