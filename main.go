@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/stan.go"
 	"github.com/patrickmn/go-cache"
@@ -119,6 +121,14 @@ func (o Order) finalPrice() int {
 }
 
 func main() {
+	handler := new(Handler)
+	cfg := Config{}
+	err := cleanenv.ReadConfig("config.yml", &cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	path := cfg.Host + ":" + cfg.Port
+	server := new(Server)
 	ClusterURLs = [2]string{
 		"wbx-world-nats-stage.dp.wb.ru",
 		"wbx-world-nats-stage.dl.wb.ru",
@@ -142,7 +152,7 @@ func main() {
 	// Cache.Set(newData.OrderUID, newData, cache.DefaultExpiration)
 
 	var userid int
-	err := db.QueryRow(`INSERT INTO orders (orderUID, entr, totalprice, customerid, tracknumber, deliveryservice) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, newData.OrderUID, newData.Entry, newData.TotalPrice, newData.CustomerID, newData.TrackNumber, newData.DeliveryService).Scan(&userid)
+	err = db.QueryRow(`INSERT INTO orders (orderUID, entr, totalprice, customerid, tracknumber, deliveryservice) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, newData.OrderUID, newData.Entry, newData.TotalPrice, newData.CustomerID, newData.TrackNumber, newData.DeliveryService).Scan(&userid)
 	if err != nil {
 		log.Println(err)
 	}
@@ -166,11 +176,22 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
+
 	ord := OrderAnother{}
 	err = json.Unmarshal(val, &ord)
-	if err != nil{
+	if err != nil {
 		log.Print(err)
 	}
 	log.Print(ord)
 	defer db.Close()
+	err = server.Run(path, handler.mainHandle())
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err = server.Shutdown(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

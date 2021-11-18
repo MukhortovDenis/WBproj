@@ -48,3 +48,9 @@ type OrderAnother struct {
 type AppCache struct {
 	client *cache.Cache
 }
+type Handler struct {
+}
+type Config struct {
+	Port string `yaml:"port" env:"PORT"`
+	Host string `yaml:"host" env:"HOST" env-default:"0.0.0.0"`
+}
