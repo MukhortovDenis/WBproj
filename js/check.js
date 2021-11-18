@@ -28,7 +28,7 @@ window.addEventListener('DOMContentLoaded', () => {
         for (const [key, value] of formData) {
           data[key] = value;
         }
-        sendData('/result', JSON.stringify(data))
+        sendData('/check-order', JSON.stringify(data))
             .then(() => {
                   window.location.href = '/result';
               }
