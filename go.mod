@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/go-chi/chi v1.5.4
+	github.com/gorilla/sessions v1.2.1
 	github.com/ilyakaznacheev/cleanenv v1.2.5
 	github.com/lib/pq v1.10.4
 	github.com/nats-io/nats.go v1.13.1-0.20211018182449-f2416a8b1483
@@ -15,6 +16,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/nats-io/nats-server/v2 v2.6.4 // indirect
 	github.com/nats-io/nats-streaming-server v0.23.1 // indirect

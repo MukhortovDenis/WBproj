@@ -12,12 +12,13 @@
     </header>
     <main>
         <h2>Введите UID заказа</h2>
-        <form id="form-user-info" action="/check-order">
+        <form id="check">
             <div>
-              <input name="uid" type="text" placeholder="UID">
+              <input name="uid" id="uid" type="text" placeholder="UID">
             </div>
-            <button type="submit" value="save-changes" form="form-user-info">Получить данные по заказу</button>
+            <button type="submit" value="save-changes" form="check">Получить данные по заказу</button>
         </form>
     </main>
+    <script src="js/check.js"></script>
 </body>
 </html>

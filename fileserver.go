@@ -10,7 +10,7 @@ import (
 // Функция подрезана с гитхаба go-chi
 // Нужна для отслеживания сервером статики сайта
 func fileServer(r chi.Router) {
-	root := ""
+	root := "./"
 	fs := http.FileServer(http.Dir(root))
 
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
