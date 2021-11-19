@@ -75,7 +75,7 @@ func msg(m *stan.Msg) *Order {
 	return &GetData
 }
 
-func natsStreaming(ClusterUrls [2]string, i int, ClusterID string, Subject string, ch chan Order) {
+func natsStreaming(ClusterURLs [2]string, i int, ClusterID string, Subject string, ch chan Order) {
 	opts := []nats.Option{nats.Name("NATS Streaming Example Subscriber")}
 	nc, err := nats.Connect(ClusterURLs[i], opts...)
 	if err != nil {
@@ -149,7 +149,6 @@ func main() {
 		TrackNumber:     data.TrackNumber,
 		DeliveryService: data.DeliveryService,
 	}
-	// Cache.Set(newData.OrderUID, newData, cache.DefaultExpiration)
 
 	var userid int
 	err = db.QueryRow(`INSERT INTO orders (orderUID, entr, totalprice, customerid, tracknumber, deliveryservice) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, newData.OrderUID, newData.Entry, newData.TotalPrice, newData.CustomerID, newData.TrackNumber, newData.DeliveryService).Scan(&userid)
@@ -172,17 +171,6 @@ func main() {
 		}
 		Cache.Set(data.OrderUID, result, cache.NoExpiration)
 	}
-	val, err := Cache.Get(data.OrderUID)
-	if err != nil {
-		log.Println(err)
-	}
-
-	ord := OrderAnother{}
-	err = json.Unmarshal(val, &ord)
-	if err != nil {
-		log.Print(err)
-	}
-	log.Print(ord)
 	defer db.Close()
 	err = server.Run(path, handler.mainHandle())
 	if err != nil {
