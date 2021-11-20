@@ -43,7 +43,7 @@ func InitDB(DBConn string) *sql.DB {
 
 func InitCache() {
 	Cache = &AppCache{
-		client: cache.New(5*time.Minute, 10*time.Minute),
+		client: cache.New(cache.NoExpiration, 0),
 	}
 }
 
