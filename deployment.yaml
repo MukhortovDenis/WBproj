@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wbproj
+spec:
+  selector:
+    matchLabels:
+      app: wbproj
+  template:
+    metadata:
+      labels:
+        app: wbproj
+    spec:
+      containers:
+      - name: wbproj
+        image: wbproj:latest
+        imagePullPolicy: Never
